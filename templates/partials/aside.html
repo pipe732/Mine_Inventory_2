@@ -44,11 +44,6 @@
             <a class="nav-link text-cream py-1" href="{% url 'estado_list' %}" class= "nav-link {% if request.resolver_match.url_name == 'mantenimiento_list' %}active{% endif %}">
               <i class="bi bi-activity"></i> Ver Estado Actual
         </li>
-        <li>
-            <a href="{% url 'inventario' %}" class= "nav-link {% if request.resolver_match.url_name == 'mantenimiento_list' %}active{% endif %}">
-                <i class="bi bi-box-seam"></i> Inventario
-            </a>
-          </li>
           <hr class="border-secondary my-1">
           <li class="nav-item">
             <a class="nav-link text-info py-1 fw-bold" href="{% url 'crear_bitacora_mantenimiento' %} " class= "nav-link {% if request.resolver_match.url_name == 'mantenimiento_list' %}active{% endif %}">
