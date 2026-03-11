@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center py-4 mb-4 border-bottom border-secondary">
+  <div>
+    <h2 class="fw-bold text-white mb-0"><i class="fa-whiteboard fa-semibold fa-truck"></i>Préstamos</h2>
+    <small class="text-secondary">Gestión de préstamos de herramientas</small>
+  </div>
+  <button class="btn btn-info text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoPrestamo">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo Préstamo
+  </button>
+</div>
+
+<!-- ALERTS -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- STATS -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center py-3 h-100 stat-top" style="border-top-color:#0dcaf0">
+      <div class="display-5 fw-bold text-info">{{ total_prestamos }}</div>
+      <small class="text-secondary text-uppercase" style="font-size:.7rem;letter-spacing:.08em">Total</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center py-3 h-100 stat-top" style="border-top-color:#9f86c0">
+      <div class="display-5 fw-bold" style="color:#9f86c0">{{ prestamos_activos }}</div>
+      <small class="text-secondary text-uppercase" style="font-size:.7rem;letter-spacing:.08em">Activos</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center py-3 h-100 stat-top" style="border-top-color:#2dd4bf">
+      <div class="display-5 fw-bold text-success">{{ prestamos_devueltos }}</div>
+      <small class="text-secondary text-uppercase" style="font-size:.7rem;letter-spacing:.08em">Devueltos</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center py-3 h-100 stat-top" style="border-top-color:#931f1d">
+      <div class="display-5 fw-bold text-danger">{{ prestamos_vencidos }}</div>
+      <small class="text-secondary text-uppercase" style="font-size:.7rem;letter-spacing:.08em">Vencidos</small>
+    </div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Buscar usuario / documento</label>
+        <input type="text" name="q" class="form-control" placeholder="Ej: Juan o 123456..." value="{{ request.GET.q }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          {% for estado in estados %}
+            <option value="{{ estado.id_estado }}" {% if request.GET.estado == estado.id_estado|stringformat:"s" %}selected{% endif %}>
+              {{ estado.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Fecha</label>
+        <input type="date" name="fecha" class="form-control" value="{{ request.GET.fecha }}">
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-info text-dark fw-semibold w-100">Filtrar</button>
+        <a href="{% url 'prestamo_list' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-app table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-3 text-info">#</th>
+          <th class="text-info">Usuario</th>
+          <th class="text-info">Herramienta</th>
+          <th class="text-info">Estado</th>
+          <th class="text-info">Observaciones</th>
+          <th class="text-info text-center">Detalles</th>
+          <th class="text-info text-center pe-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prestamo in prestamos %}
+        <tr>
+          <td class="ps-3">
+            <span class="fw-bold text-info">#{{ prestamo.id_prestamo }}</span>
+          </td>
+          <td>
+            <div class="fw-semibold text-white">{{ prestamo.numero_documento.nombre_completo }}</div>
+            <small class="text-secondary">{{ prestamo.numero_documento.numero_documento }}</small>
+          </td>
+          <td class="text-light">{{ prestamo.id_herramienta }}</td>
+          <td>
+            {% with n=prestamo.id_estado.nombre|lower %}
+              {% if n == "activo" %}
+                <span class="badge rounded-pill" style="background:rgba(159,134,192,.2);color:#c4aaeb;border:1px solid rgba(159,134,192,.3)">● Activo</span>
+              {% elif n == "devuelto" %}
+                <span class="badge rounded-pill bg-success bg-opacity-25 text-success border border-success border-opacity-25">● Devuelto</span>
+              {% elif n == "vencido" %}
+                <span class="badge rounded-pill bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">● Vencido</span>
+              {% else %}
+                <span class="badge rounded-pill bg-secondary bg-opacity-25 text-secondary">● {{ prestamo.id_estado.nombre }}</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+          <td><small class="text-secondary">{{ prestamo.observaciones|default:"—"|truncatechars:40 }}</small></td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalDetalle{{ prestamo.id_prestamo }}">
+              <i class="bi bi-list-ul"></i>
+            </button>
+          </td>
+          <td class="text-center pe-3">
+            <div class="d-flex justify-content-center gap-1">
+              <a href="{% url 'prestamo_edit' prestamo.id_prestamo %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalDevolucion{{ prestamo.id_prestamo }}" title="Devolución">
+                <i class="bi bi-arrow-return-left"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar('{% url 'prestamo_delete' prestamo.id_prestamo %}')" title="Eliminar">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- MODAL DETALLE -->
+        <div class="modal fade" id="modalDetalle{{ prestamo.id_prestamo }}" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background-color: #16262E;">
+              <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="bi bi-box-seam me-2 text-info"></i>Préstamo #{{ prestamo.id_prestamo }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <p class="text-info text-uppercase fw-bold mb-2" style="font-size:.72rem;letter-spacing:.1em">Usuario</p>
+                    <ul class="list-unstyled small">
+                      <li class="text-secondary">Nombre: <span class="text-white">{{ prestamo.numero_documento.nombre_completo }}</span></li>
+                      <li class="text-secondary">Documento: <span class="text-white">{{ prestamo.numero_documento.numero_documento }}</span></li>
+                      <li class="text-secondary">Correo: <span class="text-white">{{ prestamo.numero_documento.correo }}</span></li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="text-info text-uppercase fw-bold mb-2" style="font-size:.72rem;letter-spacing:.1em">Préstamo</p>
+                    <ul class="list-unstyled small">
+                      <li class="text-secondary">Estado: <span class="text-white">{{ prestamo.id_estado.nombre }}</span></li>
+                      <li class="text-secondary">Herramienta: <span class="text-white">{{ prestamo.id_herramienta }}</span></li>
+                      <li class="text-secondary">Observaciones: <span class="text-white">{{ prestamo.observaciones|default:"Sin observaciones" }}</span></li>
+                    </ul>
+                  </div>
+                </div>
+                <p class="text-info text-uppercase fw-bold mb-2" style="font-size:.72rem;letter-spacing:.1em">Herramientas</p>
+                <table class="table table-app table-sm table-bordered">
+                  <thead><tr><th>#</th><th>ID Herramienta</th><th>Cantidad</th></tr></thead>
+                  <tbody>
+                    {% for detalle in prestamo.detalles.all %}
+                    <tr>
+                      <td class="text-info fw-bold">{{ detalle.id_detalle_prestamo }}</td>
+                      <td>{{ detalle.id_herramienta }}</td>
+                      <td>{{ detalle.cantidad }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-secondary">Sin detalles</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL DEVOLUCIÓN -->
+        <div class="modal fade" id="modalDevolucion{{ prestamo.id_prestamo }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #16262E;">
+              <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="bi bi-arrow-return-left me-2 text-success"></i>Registrar Devolución</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{% url 'devolucion_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Detalle del préstamo</label>
+                    <select name="id_detalle_prestamo" class="form-select" required>
+                      <option value="">Seleccionar...</option>
+                      {% for detalle in prestamo.detalles.all %}
+                        <option value="{{ detalle.id_detalle_prestamo }}">Herramienta {{ detalle.id_herramienta }} — Cant: {{ detalle.cantidad }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">ID Herramienta</label>
+                    <input type="number" name="id_herramienta" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Observaciones</label>
+                    <textarea name="observaciones" class="form-control" rows="3" placeholder="Estado al devolver..."></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-success">Registrar devolución</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-secondary py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+            No hay préstamos registrados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAGINATION -->
+{% if prestamos.has_other_pages %}
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if prestamos.has_previous %}
+      <li class="page-item"><a class="page-link bg-dark border-secondary text-secondary" href="?page={{ prestamos.previous_page_number }}&q={{ request.GET.q }}&estado={{ request.GET.estado }}">‹</a></li>
+    {% endif %}
+    {% for num in prestamos.paginator.page_range %}
+      <li class="page-item {% if prestamos.number == num %}active{% endif %}">
+        <a class="page-link {% if prestamos.number == num %}bg-info border-info text-dark{% else %}bg-dark border-secondary text-secondary{% endif %}"
+           href="?page={{ num }}&q={{ request.GET.q }}&estado={{ request.GET.estado }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+    {% if prestamos.has_next %}
+      <li class="page-item"><a class="page-link bg-dark border-secondary text-secondary" href="?page={{ prestamos.next_page_number }}&q={{ request.GET.q }}&estado={{ request.GET.estado }}">›</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+
+<!-- MODAL NUEVO PRÉSTAMO -->
+<div class="modal fade" id="modalNuevoPrestamo" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="background-color: #16262E;">
+      <div class="modal-header">
+        <h5 class="modal-title text-white"><i class="bi bi-plus-circle me-2 text-info"></i>Nuevo Préstamo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{% url 'prestamo_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p class="text-info text-uppercase fw-bold mb-3 border-bottom border-secondary pb-2" style="font-size:.72rem;letter-spacing:.1em">Datos del préstamo</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Usuario <span class="text-danger">*</span></label>
+              <select name="numero_documento" class="form-select" required>
+                <option value="">Seleccionar usuario...</option>
+                {% for usuario in usuarios %}
+                  <option value="{{ usuario.numero_documento }}">{{ usuario.nombre_completo }} — {{ usuario.numero_documento }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">ID Herramienta <span class="text-danger">*</span></label>
+              <input type="number" name="id_herramienta" class="form-control" required min="1">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Estado <span class="text-danger">*</span></label>
+              <select name="id_estado" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                {% for estado in estados %}
+                  <option value="{{ estado.id_estado }}">{{ estado.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Observaciones</label>
+              <textarea name="observaciones" class="form-control" rows="2" placeholder="Notas adicionales..."></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <p class="text-info text-uppercase fw-bold mb-0" style="font-size:.72rem;letter-spacing:.1em">Herramientas del préstamo</p>
+            <button type="button" class="btn btn-sm btn-outline-info" id="btnAgregarFila">
+              <i class="bi bi-plus me-1"></i>Agregar herramienta
+            </button>
+          </div>
+
+          <div class="table-responsive border border-secondary rounded">
+            <table class="table table-app table-sm mb-0" id="tablaDetalles">
+              <thead class="table-secondary text-dark">
+                <tr>
+                  <th>ID Herramienta</th>
+                  <th>Cantidad</th>
+                  <th style="width:50px" class="text-center">—</th>
+                </tr>
+              </thead>
+              <tbody id="bodyDetalles">
+                <tr class="fila-detalle">
+                  <td><input type="number" name="det_herramienta[]" class="form-control form-control-sm" required min="1"></td>
+                  <td><input type="number" name="det_cantidad[]" class="form-control form-control-sm" required min="1" value="1"></td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-quitar" disabled>
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-info text-dark fw-semibold"><i class="bi bi-save2 me-1"></i>Guardar préstamo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ELIMINAR -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content" style="background-color: #16262E;">
+      <div class="modal-header border-danger border-opacity-25">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>¿Eliminar préstamo?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-secondary">
+        Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este préstamo?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form method="POST" id="formEliminar" style="display:inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/prestamo.js' %}"></script>
+{% endblock js %}
