@@ -1,1 +1,1 @@
-# Mine_Inventory_2
+# Mine_inventory

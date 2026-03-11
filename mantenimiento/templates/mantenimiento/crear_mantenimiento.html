@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-cream mb-4">{{ titulo }}</h2>
+    <div class="card bg-dark border-secondary p-4">
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% if form %} <div class="text-light">{{ form.as_p }}</div>
+            {% else %} <h5 class="text-info">Información de Bitácora</h5>
+                <div class="text-light">{{ form_bitacora.as_p }}</div>
+                <hr class="border-secondary">
+                <h5 class="text-info">Detalles del Mantenimiento</h5>
+                <div class="text-light">{{ form_detalle.as_p }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-info mt-3 px-5">GUARDAR REGISTRO</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

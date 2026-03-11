@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-cream"><i class="bi bi-activity"></i> Estado Actual de Equipos</h2>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow">
+        <div class="card-body">
+            <table class="table table-dark table-hover mb-0">
+                <thead class="text-cream border-secondary">
+                    <tr>
+                        <th>ID</th>
+                        <th>Estado</th>
+                        <th>Nivel (1-10)</th>
+                        <th>Descripción del Hallazgo</th>
+                    </tr>
+                </thead>
+                <tbody class="text-light">
+                    {% for e in estados %}
+                    <tr class="border-secondary">
+                        <td>{{ e.id_bitacora_estado }}</td>
+                        <td>
+                            <span class="badge {% if e.estado == 'operativo' %}bg-success{% elif e.estado == 'critico' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ e.get_estado_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress bg-secondary" style="height: 10px; width: 100px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ e.nivel_estado }}0%"></div>
+                            </div>
+                            <small>{{ e.nivel_estado }}/10</small>
+                        </td>
+                        <td>{{ e.descripcion }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted italic">No se han registrado estados de equipos.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

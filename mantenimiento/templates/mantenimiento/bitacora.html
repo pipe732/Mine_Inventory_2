@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-cream"><i class="bi bi-journal-text"></i> Bitácora de Mantenimiento</h2>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow">
+        <div class="card-body">
+            <table class="table table-dark table-hover mb-0">
+                <thead class="text-cream border-secondary">
+                    <tr>
+                        <th>ID Mantenimiento</th>
+                        <th>Tipo de Mantenimiento</th>
+                        <th>Estado Relacionado</th>
+                    </tr>
+                </thead>
+                <tbody class="text-light">
+                    {% for b in bitacoras %}
+                    <tr class="border-secondary">
+                        <td>{{ b.id_mantenimiento }}</td>
+                        <td>
+                            <span class="badge {% if b.tipo_mantenimiento == 'preventivo' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+                                {{ b.get_tipo_mantenimiento_display }}
+                            </span>
+                        </td>
+                        <td>{{ b.id_bitacora_estado }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted italic">No hay registros en la bitácora aún.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
