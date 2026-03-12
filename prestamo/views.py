@@ -92,3 +92,9 @@ def devolucion_create(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
     return redirect('prestamo_list')
+    
+formset = DetallePrestamoFormSet(request.POST or None, instance=prestamo)
+if prestamo_form.is_valid() and formset.is_valid():
+    prestamo = prestamo_form.save()
+    formset.instance = prestamo
+    formset.save()
