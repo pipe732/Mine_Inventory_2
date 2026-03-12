@@ -5,12 +5,7 @@ class Prestamo(models.Model):
     id_prestamo = models.AutoField(primary_key=True)
     # Conectamos con Stock de la app inventario
     herramienta = models.ForeignKey(Stock, on_delete=models.PROTECT, db_column='id_codigo')
-    numero_documento = models.ForeignKey(
-        'Usuario',
-        to_field='numero_documento',
-        on_delete=models.PROTECT,
-        db_column='numero_documento'
-    )
+    numero_documento = models.CharField(max_length=20, db_column='numero_documento')
     id_estado = models.ForeignKey(
         'Estado',
         on_delete=models.PROTECT,
@@ -64,28 +59,6 @@ class DevolucionHerramienta(models.Model):
 
     def __str__(self):
         return f'Devolución #{self.id_devolucion_codigo}'
-
-# Modelos de referencia
-class Usuario(models.Model):
-    numero_documento = models.CharField(max_length=20, primary_key=True)
-    id_rol = models.ForeignKey('Rol', on_delete=models.PROTECT, db_column='id_rol')
-    nombre_completo = models.CharField(max_length=150)
-    correo = models.EmailField(unique=True)
-    telefono = models.CharField(max_length=20)
-    tipo_documento = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'usuario'
-    def __str__(self):
-        return self.nombre_completo
-
-class Rol(models.Model):
-    id_rol = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=100)
-    class Meta:
-        db_table = 'rol'
-    def __str__(self):
-        return self.nombre
 
 class Estado(models.Model):
     id_estado = models.AutoField(primary_key=True)
