@@ -34,6 +34,7 @@ class Stock(models.Model):
                     )
     ubicacion     = models.CharField(max_length=150, verbose_name="Ubicación en la mina")
     estado        = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='disponible')
+    proveedor  = models.CharField(max_length=150, verbose_name="Proveedor", blank=True, null=True)  # ← NUEVO
     fecha_ingreso = models.DateField(auto_now_add=True)
     observaciones = models.TextField(blank=True, null=True)
 

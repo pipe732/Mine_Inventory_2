@@ -58,6 +58,7 @@
           <th>Herramienta</th>
           <th>Categoría</th>
           <th>Ubicación</th>
+          <th>Proveedor</th>   <!-- ← NUEVO -->
           <th>Estado</th>
           <th>Fecha ingreso</th>
           <th>Acciones</th>
@@ -70,6 +71,7 @@
           <td>{{ h.herramienta }}</td>
           <td>{{ h.categoria }}</td>
           <td>{{ h.ubicacion }}</td>
+          <td>{{ h.proveedor|default:"—" }}</td>   <!-- ← NUEVO -->
           <td>
             {% if h.estado == 'disponible' %}
               <span class="badge bg-success">Disponible</span>
@@ -89,7 +91,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted">No hay herramientas registradas.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted">No hay herramientas registradas.</td></tr>
         {% endfor %}
       </tbody>
     </table>
