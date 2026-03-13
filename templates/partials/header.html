@@ -1,9 +1,10 @@
-    <header>
-        <div class="header-brand">
-            <i class="bi bi-cloud-haze2-fill"></i>
-            Mine inventory
-        </div>
-        <div class="header-user">
-            <i class="bi bi-person-circle"></i> Admin
-        </div>
-    </header>
+<header>
+    <div class="header-brand">
+        <i class="bi bi-cloud-haze2-fill"></i>
+        Mine inventory
+    </div>
+    <div class="header-user">
+        <i class="bi bi-person-circle"></i>
+        {{ request.session.usuario_nombre|default:"Invitado" }}
+    </div>
+</header>

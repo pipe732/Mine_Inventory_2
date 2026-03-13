@@ -11,9 +11,8 @@ from .models import Usuario, Rol
 #  LOGIN
 # ─────────────────────────────────────────────────────────────
 def login_view(request):
-    # Si ya hay sesión activa, ir al dashboard
     if request.session.get('usuario_documento'):
-        return redirect('dashboard')
+        return redirect('/mine/')
 
     if request.method == 'POST':
         documento = request.POST.get('documento', '').strip()
@@ -35,12 +34,12 @@ def login_view(request):
             messages.error(request, 'Número de documento o contraseña incorrectos.')
             return render(request, 'login.html')
 
-        # Guardar datos en sesión
+        # Guardar nombre completo en sesión
         request.session['usuario_documento'] = usuario.numero_documento
         request.session['usuario_nombre']    = usuario.nombre_completo
         request.session['usuario_rol']       = usuario.id_rol.nombre
 
-        return redirect('dashboard')   # ← cambia por tu URL de inicio
+        return redirect('/mine/')
 
     return render(request, 'login.html')
 
@@ -50,7 +49,7 @@ def login_view(request):
 # ─────────────────────────────────────────────────────────────
 def logout_view(request):
     request.session.flush()
-    return redirect('login')
+    return redirect('/Usuario/login/')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -66,7 +65,6 @@ def registro_view(request):
 
         ctx = {'username': username, 'email': email, 'documento': documento}
 
-        # ── Validaciones ──────────────────────────────────────
         if not all([username, email, documento, password1, password2]):
             messages.error(request, 'Completa todos los campos.')
             return render(request, 'registro.html', ctx)
@@ -91,14 +89,13 @@ def registro_view(request):
             messages.error(request, 'El correo ya está registrado.')
             return render(request, 'registro.html', ctx)
 
-        # ── Crear usuario ─────────────────────────────────────
-        try:
-            rol_default = Rol.objects.get(id=1)   # ajusta el id si es necesario
-        except Rol.DoesNotExist:
-            messages.error(request, 'Error de configuración: no hay roles definidos.')
-            return render(request, 'registro.html', ctx)
+        # Crear rol por defecto si no existe
+        rol_default, _ = Rol.objects.get_or_create(
+            id=1,
+            defaults={'nombre': 'Usuario'}
+        )
 
-        Usuario.objects.create(
+        usuario = Usuario.objects.create(
             numero_documento=documento,
             nombre_completo=username,
             correo=email,
@@ -108,8 +105,12 @@ def registro_view(request):
             id_rol=rol_default,
         )
 
-        messages.success(request, '¡Cuenta creada! Ya puedes iniciar sesión.')
-        return redirect('login')
+        # Iniciar sesión automáticamente y redirigir a home
+        request.session['usuario_documento'] = usuario.numero_documento
+        request.session['usuario_nombre']    = usuario.nombre_completo
+        request.session['usuario_rol']       = rol_default.nombre
+
+        return redirect('/mine/')
 
     return render(request, 'registro.html', {
         'username': '', 'email': '', 'documento': ''
@@ -130,14 +131,12 @@ def olvido_contrasena_view(request):
         try:
             usuario = Usuario.objects.get(correo=email)
         except Usuario.DoesNotExist:
-            # Respuesta genérica para no revelar si el correo existe
             messages.success(
                 request,
                 'Si el correo está registrado, recibirás una contraseña temporal.'
             )
             return render(request, 'olvido_contrasena.html')
 
-        # Generar y guardar contraseña temporal
         nueva_pass = get_random_string(10)
         usuario.password = make_password(nueva_pass)
         usuario.save(update_fields=['password'])
@@ -155,14 +154,8 @@ def olvido_contrasena_view(request):
                 recipient_list=[email],
                 fail_silently=False,
             )
-            messages.success(
-                request,
-                'Se envió una contraseña temporal a tu correo.'
-            )
+            messages.success(request, 'Se envió una contraseña temporal a tu correo.')
         except Exception:
-            messages.error(
-                request,
-                'No se pudo enviar el correo. Contacta al administrador.'
-            )
+            messages.error(request, 'No se pudo enviar el correo. Contacta al administrador.')
 
     return render(request, 'olvido_contrasena.html')
