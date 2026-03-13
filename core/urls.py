@@ -8,4 +8,5 @@ urlpatterns = [
     path('mantenimiento/', include('mantenimiento.urls')),#modulo de mantenimiento A L B E R T
     path('prestamo/', include('prestamo.urls')),
     path('inventario/', include('inventario.urls')),
+    path('Usuario/', include('Usuario.urls')), # Added URL pattern for usuarios app
 ]

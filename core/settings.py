@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'inventario',
     'prestamo',
     'mantenimiento', #modulo de Albert
+    'Usuario', #modulo de usuarios
 ]
 
 MIDDLEWARE = [
