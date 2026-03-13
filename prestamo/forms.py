@@ -1,187 +1,137 @@
 from django import forms
-from django.forms import inlineformset_factory
-
+from Usuario.models import Usuario
+from prestamos.models import Prestamo, DetallePrestamo, DevolucionHerramienta, Estado
 from inventario.models import Stock
-from .models import (
-    Prestamo,
-    DetallePrestamo,
-    DevolucionHerramienta,
-    Estado,
-)
 
 
-# ─────────────────────────────────────────────
-# Widget helpers
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────
+# FORMULARIO DE USUARIO
+# ─────────────────────────────────────────
+class UsuarioForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = [
+            'numero_documento',
+            'id_rol',
+            'nombre_completo',
+            'correo',
+            'telefono',
+            'tipo_documento',
+        ]
+        widgets = {
+            'numero_documento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 1234567890'}),
+            'id_rol':           forms.Select(attrs={'class': 'form-control'}),
+            'nombre_completo':  forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'correo':           forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ejemplo@correo.com'}),
+            'telefono':         forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 3001234567'}),
+            'tipo_documento':   forms.Select(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'numero_documento': 'Número de Documento',
+            'id_rol':           'Rol',
+            'nombre_completo':  'Nombre Completo',
+            'correo':           'Correo Electrónico',
+            'telefono':         'Teléfono',
+            'tipo_documento':   'Tipo de Documento',
+        }
 
-class StockSelect(forms.Select):
-    """Dropdown que muestra código + nombre de herramienta."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.attrs.setdefault('class', 'form-select')
+    def clean_numero_documento(self):
+        numero = self.cleaned_data.get('numero_documento')
+        if not numero.isdigit():
+            raise forms.ValidationError('El número de documento solo debe contener dígitos.')
+        return numero
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        if not telefono.isdigit():
+            raise forms.ValidationError('El teléfono solo debe contener dígitos.')
+        return telefono
+
+    def clean_correo(self):
+        correo = self.cleaned_data.get('correo')
+        if Usuario.objects.filter(correo=correo).exclude(
+            numero_documento=self.instance.numero_documento
+        ).exists():
+            raise forms.ValidationError('Este correo ya está registrado.')
+        return correo
 
 
-# ─────────────────────────────────────────────
-# Préstamo
-# ─────────────────────────────────────────────
-
+# ─────────────────────────────────────────
+# FORMULARIO DE PRÉSTAMO
+# Conecta Usuario (numero_documento) → Prestamo
+# ─────────────────────────────────────────
 class PrestamoForm(forms.ModelForm):
-    """Formulario principal de préstamo."""
-
+    # Mostramos el usuario como selector legible
     numero_documento = forms.ModelChoiceField(
         queryset=Usuario.objects.all(),
-        label='Usuario (documento)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Usuario',
+        widget=forms.Select(attrs={'class': 'form-control'}),
         to_field_name='numero_documento',
-    )
-
-    id_estado = forms.ModelChoiceField(
-        queryset=Estado.objects.all(),
-        label='Estado',
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-    observaciones = forms.CharField(
-        label='Observaciones',
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Observaciones opcionales…',
-        }),
     )
 
     class Meta:
         model = Prestamo
-        fields = ['numero_documento', 'id_estado', 'observaciones']
+        fields = ['herramienta', 'numero_documento', 'id_estado', 'observaciones']
+        widgets = {
+            'herramienta':    forms.Select(attrs={'class': 'form-control'}),
+            'id_estado':      forms.Select(attrs={'class': 'form-control'}),
+            'observaciones':  forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'herramienta':   'Herramienta',
+            'id_estado':     'Estado',
+            'observaciones': 'Observaciones',
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Guardamos solo el numero_documento (CharField) en el modelo
+        usuario = self.cleaned_data['numero_documento']
+        instance.numero_documento = usuario.numero_documento
+        if commit:
+            instance.save()
+        return instance
 
 
-# ─────────────────────────────────────────────
-# Detalle de Préstamo
-# ─────────────────────────────────────────────
-
+# ─────────────────────────────────────────
+# FORMULARIO DE DETALLE DE PRÉSTAMO
+# ─────────────────────────────────────────
 class DetallePrestamoForm(forms.ModelForm):
-    """
-    Línea individual de herramienta dentro de un préstamo.
-    Solo muestra herramientas con estado 'disponible'.
-    """
-
-    herramienta = forms.ModelChoiceField(
-        queryset=Stock.objects.filter(estado='disponible'),
-        label='Herramienta',
-        widget=StockSelect(),
-    )
-
-    cantidad = forms.IntegerField(
-        label='Cantidad',
-        min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'min': 1,
-        }),
-    )
-
     class Meta:
         model = DetallePrestamo
-        fields = ['herramienta', 'cantidad']
+        fields = ['id_prestamo', 'herramienta', 'cantidad']
+        widgets = {
+            'id_prestamo':  forms.Select(attrs={'class': 'form-control'}),
+            'herramienta':  forms.Select(attrs={'class': 'form-control'}),
+            'cantidad':     forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
+        labels = {
+            'id_prestamo': 'Préstamo',
+            'herramienta': 'Herramienta',
+            'cantidad':    'Cantidad',
+        }
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
-        if cantidad is not None and cantidad < 1:
-            raise forms.ValidationError('La cantidad debe ser al menos 1.')
+        if cantidad <= 0:
+            raise forms.ValidationError('La cantidad debe ser mayor a 0.')
         return cantidad
 
 
-# FormSet: múltiples detalles ligados a un Préstamo
-DetallePrestamoFormSet = inlineformset_factory(
-    Prestamo,
-    DetallePrestamo,
-    form=DetallePrestamoForm,
-    extra=1,          # 1 línea vacía por defecto
-    can_delete=True,  # permite eliminar filas existentes
-    min_num=1,        # al menos 1 herramienta
-    validate_min=True,
-)
-
-
-# ─────────────────────────────────────────────
-# Devolución de Herramienta
-# ─────────────────────────────────────────────
-
+# ─────────────────────────────────────────
+# FORMULARIO DE DEVOLUCIÓN
+# ─────────────────────────────────────────
 class DevolucionHerramientaForm(forms.ModelForm):
-    """Registra la devolución de una herramienta prestada."""
-
-    id_detalle_prestamo = forms.ModelChoiceField(
-        queryset=DetallePrestamo.objects.select_related(
-            'id_prestamo', 'herramienta'
-        ),
-        label='Detalle de préstamo',
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-    herramienta = forms.ModelChoiceField(
-        queryset=Stock.objects.all(),
-        label='Herramienta devuelta',
-        widget=StockSelect(),
-    )
-
-    observaciones = forms.CharField(
-        label='Observaciones',
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Estado de la herramienta al devolver…',
-        }),
-    )
-
     class Meta:
         model = DevolucionHerramienta
         fields = ['id_detalle_prestamo', 'herramienta', 'observaciones']
-
-    def clean(self):
-        cleaned_data = super().clean()
-        detalle = cleaned_data.get('id_detalle_prestamo')
-        herramienta = cleaned_data.get('herramienta')
-
-        # Validar que la herramienta devuelta coincide con el detalle
-        if detalle and herramienta:
-            if detalle.herramienta != herramienta:
-                raise forms.ValidationError(
-                    'La herramienta devuelta no coincide con el detalle del préstamo.'
-                )
-        return cleaned_data
-
-
-
-# ─────────────────────────────────────────────
-# Búsqueda / Filtros (no ligados a modelos)
-# ─────────────────────────────────────────────
-
-class FiltroPrestamosForm(forms.Form):
-    """Filtros para listar préstamos."""
-
-    usuario = forms.CharField(
-        label='Documento / nombre',
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Buscar usuario…',
-        }),
-    )
-
-    estado = forms.ModelChoiceField(
-        queryset=Estado.objects.all(),
-        label='Estado',
-        required=False,
-        empty_label='Todos',
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-    herramienta = forms.ModelChoiceField(
-        queryset=Stock.objects.all(),
-        label='Herramienta',
-        required=False,
-        empty_label='Todas',
-        widget=StockSelect(),
-    )
+        widgets = {
+            'id_detalle_prestamo': forms.Select(attrs={'class': 'form-control'}),
+            'herramienta':         forms.Select(attrs={'class': 'form-control'}),
+            'observaciones':       forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'id_detalle_prestamo': 'Detalle de Préstamo',
+            'herramienta':         'Herramienta a Devolver',
+            'observaciones':       'Observaciones',
+        }
