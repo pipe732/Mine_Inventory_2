@@ -45,3 +45,12 @@ class Stock(models.Model):
         verbose_name = "Herramienta"
         verbose_name_plural = "Herramientas"
         ordering = ['codigo']
+class Proveedor(models.Model):
+    nit = models.CharField(max_length=20, unique=True)
+    nombre = models.CharField(max_length=100)
+    numero = models.CharField(max_length=20)
+    correo = models.EmailField()
+    que_provee = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.nombres

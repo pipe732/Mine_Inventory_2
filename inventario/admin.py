@@ -23,4 +23,6 @@ class StockAdmin(admin.ModelAdmin):
             'fields': ('ubicacion', 'estado', 'fecha_ingreso', 'observaciones')
         }),
     )
-# Register your models here.
+from .models import Proveedor
+
+admin.site.register(Proveedor)
