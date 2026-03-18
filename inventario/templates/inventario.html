@@ -4,16 +4,16 @@
 <div class="container mt-4">
 
   <!-- Encabezado -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-3"> <!-- Distribuye los elementos hijos: uno a la izquierda y otro a la derecha   mb= margin border -->
     <h1>Inventario de Herramientas</h1>
-    <a href="{% url 'agregar_herramienta' %}" class="btn btn-danger">
+    <a href="{% url 'agregar_herramienta' %}" class="btn btn-danger"> <!-- boton de color rojo -->
       + Agregar herramienta
     </a>
   </div>
 
   <!-- Filtros -->
-  <form method="GET" class="row g-2 mb-4">
-    <div class="col-md-3">
+  <form method="GET" class="row g-2 mb-4"> <!-- #Fila de Bootstrap Grid contenedor de columnas -->
+    <div class="col-md-3">  <!-- #Columnas que ocupan X/12 del ancho a partir de 768px (breakpoint md) -->
       <input type="text" name="q" class="form-control"
              placeholder="Buscar por código o nombre"
              value="{{ filtros.q }}">
@@ -98,3 +98,23 @@
   </div>
 </div>
 {% endblock %}
+
+ mb medium 
+ {% comment %} <div class="col-md-3"> <!-- búsqueda → ~25% --></div>
+  <div class="col-md-2"> <!-- select estado → ~16.7% --></div>
+  <div class="col-md-3"> <!-- select categoría → ~25% --></div>
+  <div class="col-md-2"> <!-- input ubicación → ~16.7% --></div>
+  <div class="col-md-2"> <!-- botones filtrar + limpiar → ~16.7% --></div>
+</form> {% endcomment %}
+
+
+{% comment %} mt-4 → margin-top: 1.5rem (espacio superior — la escala va de 0 a 5) {% endcomment %}
+ 
+{% comment %} table-responsive → Hace que la tabla tenga scroll horizontal en pantallas pequeñas (muy útil) {% endcomment %}
+{% comment %} table-striped → Filas con fondo alternado (cebra) {% endcomment %}
+{% comment %} table-bordered → Bordes en todas las celdas {% endcomment %}
+{% comment %} align-middle → Alinea verticalmente el contenido de las celdas al centro {% endcomment %}
+
+{% comment %} table-dark → Fondo oscuro + texto claro (ideal para encabezados) {% endcomment %}
+
+badge → Pequeño "etiqueta" redondeada
