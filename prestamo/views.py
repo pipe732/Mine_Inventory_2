@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Prestamo, DetallePrestamo, DevolucionHerramienta, Estado
 from inventario.models import Stock 
-
+#prueba
 def prestamo_list_view(request):
     # Optimización de consultas
     qs = Prestamo.objects.select_related('id_estado', 'herramienta').prefetch_related('detalles')
