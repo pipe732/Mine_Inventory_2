@@ -1,6 +1,7 @@
 from django.db import models
-
 class CategoriaHerramienta(models.Model):
+    nombre = models.CharField(max_length=100)  
+
     ESTADO_CHOICES = [
         ('Herramienta', 'Herramienta'),
         ('Maquinaria', 'Maquinaria'),
@@ -8,6 +9,9 @@ class CategoriaHerramienta(models.Model):
         ('Consumible', 'Consumible'),
         ('Otro', 'Otro'),
     ]
+
+    def __str__(self):
+        return self.nombre
 
     def __str__(self):
         return self.nombre
@@ -54,4 +58,4 @@ class Proveedor(models.Model):
     que_provee = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.nombres
+        return self.nombre

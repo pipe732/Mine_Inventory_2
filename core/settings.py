@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'prestamo',
     'mantenimiento', #modulo de Albert
     'Usuario', #modulo de usuarios
+    'almacenamiento.apps.AlmacenamientoConfig',# modelo de ubicacion 
 ]
 
 MIDDLEWARE = [
